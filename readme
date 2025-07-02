@@ -1,0 +1,393 @@
+datos = pd.read_csv("../../../datos/MuestraCredito5000V2.csv", delimiter = ';', decimal = ".")
+datos.head()
+
+
+datos["IngresoNeto"] = datos["IngresoNeto"].astype('category')
+datos["CoefCreditoAvaluo"] = datos["CoefCreditoAvaluo"].astype('category')
+datos["MontoCuota"] = datos["MontoCuota"].astype('category')
+datos["GradoAcademico"] = datos["GradoAcademico"].astype('category')
+datos.info()
+
+
+
+
+
+def distribucion_variable_predecir(data:pd.DataFrame, variable_predict:str):
+  conteo     = data[variable_predict].value_counts()
+  valores    = conteo.to_list()
+  categorias = conteo.index.to_list()
+  titulo     = "Distribución de la variable %s" % variable_predict
+  
+  fig, ax = plt.subplots()
+  ax.bar(categorias, valores)
+  
+  ax.set_ylabel(variable_predict)
+  ax.set_title(titulo)
+  
+  for i, valor in enumerate(valores):
+    porc = round(valor / sum(valores) * 100, 2)
+    text = str(valor) + "\n" + str(porc) + "%"
+    ax.text(i, valor * 0.45, text, color='white', ha='center', fontsize=10)
+  
+  return(fig)
+
+fig = distribucion_variable_predecir(datos, "BuenPagador")
+plt.show()
+
+def poder_predictivo_numerica(data:pd.DataFrame, var:str, variable_predict:str):
+  g = sns.FacetGrid(data, hue = variable_predict, height = 4, aspect = 1.8)
+  g = g.map(sns.kdeplot, var, fill = True)
+  g = g.add_legend()
+  
+  g.set_ylabels("Densidad")
+  
+  return(g)
+
+fig = poder_predictivo_numerica(datos, "MontoCredito", "BuenPagador")
+plt.show()
+
+
+def poder_predictivo_numerica(data:pd.DataFrame, var:str, variable_predict:str):
+  g = sns.FacetGrid(data, hue = variable_predict, height = 4, aspect = 1.8)
+  g = g.map(sns.kdeplot, var, fill = True)
+  g = g.add_legend()
+  
+  g.set_ylabels("Densidad")
+  
+  return(g)
+
+fig = poder_predictivo_numerica(datos, "MontoCredito", "BuenPagador")
+plt.show()
+
+
+
+g = poder_predictivo_categorica(datos, "MontoCuota", "BuenPagador")
+plt.show()
+
+
+g = poder_predictivo_categorica(datos, "GradoAcademico", "BuenPagador")
+plt.show()
+
+
+datos = pd.read_csv("../../../datos/MuestraCredito5000V2.csv", delimiter = ';', decimal = ".")
+datos.head()
+
+
+datos["IngresoNeto"] = datos["IngresoNeto"].astype('category')
+datos["CoefCreditoAvaluo"] = datos["CoefCreditoAvaluo"].astype('category')
+datos["MontoCuota"] = datos["MontoCuota"].astype('category')
+datos["GradoAcademico"] = datos["GradoAcademico"].astype('category')
+datos.info()
+
+X = datos.loc[:, datos.columns != 'BuenPagador']
+X
+
+y = datos.loc[:, 'BuenPagador'].to_numpy()
+y[0:6]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85)
+
+preprocesamiento = ColumnTransformer(
+  transformers=[
+    ('cat', OneHotEncoder(sparse_output = False), ['IngresoNeto', 'CoefCreditoAvaluo', 'MontoCuota', 'GradoAcademico']),
+    ('num', StandardScaler(), ['MontoCredito'])
+  ]
+)
+
+
+modelo = Pipeline(steps=[
+    ('preprocesador', preprocesamiento),
+    ('clasificador', GaussianNB())
+])
+
+modelo.fit(X_train, y_train)
+
+
+pred = modelo.predict(X_test)
+pred
+
+
+labels = ["Si", "No"]
+MC = confusion_matrix(y_test, pred, labels=labels)
+MC
+
+
+def indices_general(MC, nombres = None):
+  precision_global = np.sum(MC.diagonal()) / np.sum(MC)
+  error_global     = 1 - precision_global
+  precision_categoria  = pd.DataFrame(MC.diagonal()/np.sum(MC,axis = 1)).T
+  if nombres!=None:
+    precision_categoria.columns = nombres
+  
+  return {"Matriz de Confusión":MC, 
+          "Precisión Global":   precision_global, 
+          "Error Global":       error_global, 
+          "Precisión por categoría":precision_categoria}
+
+indices = indices_general(MC, labels)
+for k in indices:
+  print("\n%s:\n%s"%(k,str(indices[k])))
+
+
+
+
+datos = pd.read_csv("../../../datos/MuestraCredito5000V2.csv", delimiter = ';', decimal = ".")
+datos.head()
+
+
+
+datos["IngresoNeto"] = datos["IngresoNeto"].astype('category')
+datos["CoefCreditoAvaluo"] = datos["CoefCreditoAvaluo"].astype('category')
+datos["MontoCuota"] = datos["MontoCuota"].astype('category')
+datos["GradoAcademico"] = datos["GradoAcademico"].astype('category')
+datos.info()
+
+
+X = datos.loc[:, datos.columns != 'BuenPagador']
+X
+
+y = datos.loc[:, 'BuenPagador'].to_numpy()
+y[0:6]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85)
+
+
+preprocesamiento = ColumnTransformer(
+  transformers=[
+    ('cat', OneHotEncoder(sparse_output = False), ['IngresoNeto', 'CoefCreditoAvaluo', 'MontoCuota', 'GradoAcademico']),
+    ('num', StandardScaler(), ['MontoCredito'])
+  ]
+)
+
+
+modelo = Pipeline(steps=[
+    ('preprocesador', preprocesamiento),
+    ('clasificador', GaussianNB())
+])
+
+modelo.fit(X_train, y_train)
+
+
+pred = modelo.predict(X_test)
+pred
+
+labels = ["Si", "No"]
+MC = confusion_matrix(y_test, pred, labels=labels)
+MC
+
+
+modelo = Pipeline(steps=[
+    ('preprocesador', preprocesamiento),
+    ('clasificador', GaussianNB())
+])
+
+modelo.fit(X_train, y_train)
+
+
+pred = modelo.predict(X_test)
+pred
+
+
+
+def indices_general(MC, nombres = None):
+  precision_global = np.sum(MC.diagonal()) / np.sum(MC)
+  error_global     = 1 - precision_global
+  precision_categoria  = pd.DataFrame(MC.diagonal()/np.sum(MC,axis = 1)).T
+  if nombres!=None:
+    precision_categoria.columns = nombres
+  
+  return {"Matriz de Confusión":MC, 
+          "Precisión Global":   precision_global, 
+          "Error Global":       error_global, 
+          "Precisión por categoría":precision_categoria}
+
+indices = indices_general(MC, labels)
+for k in indices:
+  print("\n%s:\n%s"%(k,str(indices[k])))
+
+
+
+
+labels = ["Si", "No"]datos = pd.read_csv("../../../datos/MuestraCredito5000V2.csv", delimiter = ';', decimal = ".")
+datos.head()
+
+
+
+
+MC = confusion_matrix(y_test, pred, labels=labels)
+MC
+
+def indices_general(MC, nombres = None):
+  precision_global = np.sum(MC.diagonal()) / np.sum(MC)
+  error_global     = 1 - precision_global
+  precision_categoria  = pd.DataFrame(MC.diagonal()/np.sum(MC,axis = 1)).T
+  if nombres!=None:
+    precision_categoria.columns = nombres
+  
+  return {"Matriz de Confusión":MC, 
+          "Precisión Global":   precision_global, 
+          "Error Global":       error_global, 
+          "Precisión por categoría":precision_categoria}
+
+indices = indices_general(MC, labels)
+for k in indices:
+  print("\n%s:\n%s"%(k,str(indices[k])))
+
+
+
+datos = pd.read_csv("../../../datos/MuestraCredito5000V2.csv", delimiter = ';', decimal = ".")
+datos.head()
+datos["IngresoNeto"] = datos["IngresoNeto"].astype('category')
+datos["CoefCreditoAvaluo"] = datos["CoefCreditoAvaluo"].astype('category')
+datos["MontoCuota"] = datos["MontoCuota"].astype('category')
+datos["GradoAcademico"] = datos["GradoAcademico"].astype('category')
+datos.info()
+
+
+X = datos.loc[:, datos.columns != 'BuenPagador']
+X
+
+y = datos.loc[:, 'BuenPagador'].to_numpy()
+y[0:6]
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85)
+
+
+preprocesamiento = ColumnTransformer(
+  transformers=[
+    ('cat', OneHotEncoder(sparse_output = False), ['IngresoNeto', 'CoefCreditoAvaluo', 'MontoCuota', 'GradoAcademico']),
+    ('num', StandardScaler(), ['MontoCredito'])
+  ]
+)
+
+
+#Introducción
+#Para generar un modelo de Análisis Discriminante Lineal se debe utilizar LinearDiscriminantAnalysis del paquete sklearn, algunos de sus parámetros más importantes a destacar son:
+
+#solver: Define el método matemático para resolver el modelo. Puede ser: svd, lsqr o eigen.
+
+#shrinkage: Aplica regularización a la matriz de covarianza para evitar sobreajuste o inestabilidad. Solo si el parámetro solver es lsqr o eigen. Se puede utilizar None (no aplica regularización), auto (ajusta automáticamente la regularización) o se puede ajustar maualmente utilizando un valor entre 0 y 1.
+
+#Generación del modelo
+modelo = Pipeline(steps=[
+    ('preprocesador', preprocesamiento),
+    ('clasificador', LinearDiscriminantAnalysis(solver = 'lsqr', shrinkage = 'auto'))
+])
+
+modelo.fit(X_train, y_train)
+
+
+datos = pd.read_csv("../../../datos/MuestraCredito5000V2.csv", delimiter = ';', decimal = ".")
+datos.head()
+
+datos["IngresoNeto"] = datos["IngresoNeto"].astype('category')
+datos["CoefCreditoAvaluo"] = datos["CoefCreditoAvaluo"].astype('category')
+datos["MontoCuota"] = datos["MontoCuota"].astype('category')
+datos["GradoAcademico"] = datos["GradoAcademico"].astype('category')
+datos.info()
+
+
+X = datos.loc[:, datos.columns != 'BuenPagador']
+X
+
+y = datos.loc[:, 'BuenPagador'].to_numpy()
+y[0:6]
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85)
+preprocesamiento = ColumnTransformer(
+  transformers=[
+    ('cat', OneHotEncoder(sparse_output = False), ['IngresoNeto', 'CoefCreditoAvaluo', 'MontoCuota', 'GradoAcademico']),
+    ('num', StandardScaler(), ['MontoCredito'])
+  ]
+)
+
+modelo = Pipeline(steps=[
+    ('preprocesador', preprocesamiento),
+    ('clasificador', LinearDiscriminantAnalysis(solver = 'lsqr', shrinkage = 'auto'))
+])
+
+modelo.fit(X_train, y_train)
+
+
+pred = modelo.predict(X_test)
+pred
+
+labels = ["Si", "No"]
+MC = confusion_matri
+MC
+
+
+
+def indices_general(MC, nombres = None):
+  precision_global = np.sum(MC.diagonal()) / np.sum(MC)
+  error_global     = 1 - precision_global
+  precision_categoria  = pd.DataFrame(MC.diagonal()/np.sum(MC,axis = 1)).T
+  if nombres!=ne:
+    precision_categoria.columns = nombres
+  
+  return {"Matriz de Confusión":MC, 
+          "Precisión Global":   precision_global, 
+          "Error Global":       error_global, 
+          "Precisión por categoría":precision_categoria}
+
+indices = indices_general(MC, labels)
+for k in indices:
+  print("\n%s:\n%s"%(k,str(indices[k])))
+
+datos = pd.read_csv("../../../datos/MuestraCredito5000V2.csv", delimiter = ';', decimal = ".")
+datos.head()
+
+datos["IngresoNeto"] = datos["IngresoNeto"].astype('category')
+datos["CoefCreditoAvaluo"] = datos["CoefCreditoAvaluo"].astype('category')
+datos["MontoCuota"] = datos["MontoCuota"].astype('category')
+datos["GradoAcademico"] = datos["GradoAcademico"].astype('category')
+datos.info()
+
+
+X = datos.loc[:, datos.columns != 'BuenPagador']
+X
+
+y = datos.loc[:, 'BuenPagador'].to_numpy()
+y[0:6]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85)
+
+preprocesamiento = ColumnTransformer(
+  transformers=[
+    ('cat', OneHotEncoder(sparse_output = False), ['IngresoNeto', 'CoefCreditoAvaluo', 'MontoCuota', 'GradoAcademico']),
+    ('num', StandardScaler(), ['MontoCredito'])
+  ]
+)
+
+modelo = Pipeline(steps=[
+    ('preprocesador', preprocesamiento),
+    ('clasificador', QuadraticDiscriminantAnalysis(reg_param = 0.1))
+])
+
+modelo.fit(X_train, y_train)
+
+pred = modelo.predict(X_test)
+pred
+
+labels = ["Si", "No"]
+MC = confusion_matrix(y_test, pred, labels=labels)
+MC
+
+
+def indices_general(MC, nombres = None):
+  precision_global = np.sum(MC.diagonal()) / np.sum(MC)
+  error_global     = 1 - precision_global
+  precision_categoria  = pd.DataFrame(MC.diagonal()/np.sum(MC,axis = 1)).T
+  if nombres!=None:
+    precision_categoria.columns = nombres
+  
+  return {"Matriz de Confusión":MC, 
+          "Precisión Global":   precision_global, 
+          "Error Global":       error_global, 
+          "Precisión por categoría":precision_categoria}
+
+indices = indices_general(MC, labels)
+for k in indices:
+  print("\n%s:\n%s"%(k,str(indices[k])))
